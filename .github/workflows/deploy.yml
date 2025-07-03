@@ -1,0 +1,24 @@
+name: Build and Push to Docker Hub
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}     # <- usa aleavilac como valor en secreto
+          password: ${{ secrets.DOCKERHUB_TOKEN }}        # <- contiene tu dckr_pat...
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: aleavilac/mi-app-web:latest

@@ -20,5 +20,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
+          context: ./app
+          file: ./app/Dockerfile
           push: true
           tags: aleavilac/mi-app-web:latest

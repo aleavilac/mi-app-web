@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  myapp:
+    build: ./app
+    container_name: myapp_container
+
+  mynginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - myapp
+    container_name: mynginx_container

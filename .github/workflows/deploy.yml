@@ -1,22 +1,25 @@
-name: Build and Push to Docker Hub
+name: Build and Deploy to EC2
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # Paso 1: Clona el repositorio
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Paso 2: Login a Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}     # <- usa aleavilac como valor en secreto
-          password: ${{ secrets.DOCKERHUB_TOKEN }}        # <- contiene tu dckr_pat...
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Paso 3: Construye y publica imagen desde carpeta /app
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -24,3 +27,19 @@ jobs:
           file: ./app/Dockerfile
           push: true
           tags: aleavilac/mi-app-web:latest
+
+      # Paso 4: Establece conexión SSH a tu EC2 usando llave secreta
+      - name: Set up SSH connection to EC2
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      # Paso 5: Ejecuta comandos en la instancia EC2 remota
+      - name: Deploy Docker container on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            docker pull aleavilac/mi-app-web:latest
+            docker stop vzeta-app || true
+            docker rm vzeta-app || true
+            docker run -d -p 80:80 --name vzeta-app aleavilac/mi-app-web:latest
+          EOF
